@@ -31,8 +31,12 @@ export class LoginComponent {
     const val = this.form.value;
 
     this.auth.login(val.email, val.password).subscribe(
-      () => {this.router.navigateByUrl('/courses');},
-      err => {alert('login failed!');}
+      () => {
+        this.router.navigateByUrl('/courses');
+      },
+      err => {
+        alert('login failed!');
+      }
     )
 
 
