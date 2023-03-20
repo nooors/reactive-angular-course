@@ -1,3 +1,5 @@
+import { catchError } from 'rxjs/operators';
+import { MessagesService } from './../messages/messages.service';
 import { CoursesService } from "./../services/courses.service";
 import { AfterViewInit, Component, Inject } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
@@ -5,12 +7,13 @@ import { Course } from "../model/course";
 import { FormBuilder, Validators, FormGroup } from "@angular/forms";
 import * as moment from "moment";
 import { LoadingService } from "../loading/loading-service";
+import { throwError } from 'rxjs';
 
 @Component({
   selector: "course-dialog",
   templateUrl: "./course-dialog.component.html",
   styleUrls: ["./course-dialog.component.css"],
-  providers: [LoadingService],
+  providers: [LoadingService, MessagesService],
 })
 export class CourseDialogComponent implements AfterViewInit {
   form: FormGroup;
@@ -22,7 +25,8 @@ export class CourseDialogComponent implements AfterViewInit {
     private dialogRef: MatDialogRef<CourseDialogComponent>,
     @Inject(MAT_DIALOG_DATA) course: Course,
     private coursesService: CoursesService,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private messagesService: MessagesService
   ) {
     this.course = course;
 
@@ -39,7 +43,15 @@ export class CourseDialogComponent implements AfterViewInit {
   save() {
     const changes = this.form.value;
 
-    const saveCourse$ = this.coursesService.saveCourse(this.course.id, changes);
+    const saveCourse$ = this.coursesService.saveCourse(this.course.id, changes)
+      .pipe(
+        catchError(err => {
+          const message = "Coud not save course";
+          console.log(message, err);
+          this.messagesService.showErrors(message);
+          return throwError(err)
+        })
+      )
     this.loadingService.showUntilComplete(saveCourse$)
     .subscribe((val) => {
       this.dialogRef.close(val);
